@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>RK PID Annotator User Guide</title>
+  <style>
+    body { font-family: Segoe UI, Arial, sans-serif; color: #1f2933; margin: 0; background: #f5f7fa; }
+    main { max-width: 960px; margin: 0 auto; padding: 36px 24px 56px; background: #fff; min-height: 100vh; }
+    h1, h2 { color: #0f766e; }
+    code { background: #eef2f7; padding: 2px 5px; border-radius: 4px; }
+    li { margin: 8px 0; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>RK PID Annotator</h1>
+  <p>RK PID Annotator is a Windows Excel add-in for annotating P&amp;ID PDF documents from the currently open Excel workbook.</p>
+
+  <h2>Basic Workflow</h2>
+  <ol>
+    <li>Open the workbook that contains your component or tag list.</li>
+    <li>Select the worksheet with the tag data.</li>
+    <li>Click <code>PID Annotator</code> -&gt; <code>Annotate PDFs</code>.</li>
+    <li>Confirm the header row and choose the tag column.</li>
+    <li>Select one or more note columns, such as description, location, comments, or service.</li>
+    <li>Choose the PDF file and output path.</li>
+    <li>Click <code>Annotate</code>.</li>
+  </ol>
+
+  <h2>Preview Tags</h2>
+  <p>Use <code>Preview Tags</code> before annotating to confirm that the add-in is reading the expected worksheet data.</p>
+
+  <h2>PDF Output</h2>
+  <p>The add-in searches the PDF text for exact tag values from the selected Excel column. Matching words are highlighted, and a PDF note annotation is added with the selected Excel data.</p>
+
+  <h2>Troubleshooting</h2>
+  <ul>
+    <li>If no tags are found, confirm that the selected PDF contains selectable text rather than only scanned images.</li>
+    <li>If the wrong data appears, confirm the active worksheet and header row before running the annotation.</li>
+    <li>If Excel blocks the add-in, right-click the downloaded <code>.xll</code>, open Properties, and choose Unblock if Windows shows that option.</li>
+  </ul>
+
+  <h2>About</h2>
+  <p>Click <code>PID Annotator</code> -&gt; <code>About</code> to see version, author, contact, and GitHub repository information.</p>
+</main>
+</body>
+</html>
