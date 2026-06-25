@@ -23,6 +23,7 @@
     <li>Select the worksheet with the tag data.</li>
     <li>Click <code>PDF Annotator</code> -&gt; <code>Annotate PDFs</code>.</li>
     <li>Confirm the header row and choose the tag column.</li>
+    <li>Confirm the tag format, including minimum parts, maximum parts, and separators.</li>
     <li>Select one or more note columns, such as description, location, comments, or service.</li>
     <li>Optionally enable watermarking and select one or more columns whose values should appear beneath each matching tag.</li>
     <li>Choose the PDF file and output path.</li>
@@ -33,7 +34,11 @@
   <p>Use <code>Preview Tags</code> before annotating to confirm that the add-in is reading the expected worksheet data.</p>
 
   <h2>PDF Output</h2>
-  <p>The add-in searches the PDF text for exact tag values from the selected Excel column. Matching words are highlighted, and a PDF note annotation is added with the selected Excel data.</p>
+  <p>The add-in first builds an index of all PDF tags that match the configured tag format. It then compares that index with the selected Excel tag column. Matching words are highlighted, and a PDF note annotation is added with the selected Excel data.</p>
+  <p>When processing finishes, the add-in creates a formatted <code>PDF Tag Report</code> worksheet in the active workbook. The report includes a summary, duplicate Excel tags, found tags, Excel tags not found in the PDF, and per-page tag counts. A CSV copy is also written next to the output PDF as a file-based fallback.</p>
+
+  <h2>Tag Format</h2>
+  <p>Use <code>Min parts</code>, <code>Max parts</code>, and <code>Separators</code> to describe how tags look in the PDF. The default matches 3-5 part tags separated by <code>-</code> or <code>.</code>.</p>
 
   <h2>Watermarks</h2>
   <p>Enable <code>Watermark</code> to draw selected Excel values directly beneath every matching tag. Select one or more columns, use <code>Move up</code> and <code>Move down</code> to control their order, and adjust the font size, text color, or white background as needed.</p>
@@ -54,6 +59,7 @@
   <h2>Troubleshooting</h2>
   <ul>
     <li>If no tags are found, confirm that the selected PDF contains selectable text rather than only scanned images.</li>
+    <li>If the report sheet misses expected PDF tags, adjust the tag format part count or separators and run annotation again.</li>
     <li>If the wrong data appears, confirm the active worksheet and header row before running the annotation.</li>
     <li>If Excel blocks the add-in, right-click the downloaded <code>.xll</code>, open Properties, and choose Unblock if Windows shows that option.</li>
   </ul>

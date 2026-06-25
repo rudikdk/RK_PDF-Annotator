@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace RKPdfAnnotator;
@@ -11,6 +12,9 @@ internal sealed class AnnotateDialog : Form
 {
     private readonly NumericUpDown headerRowInput;
     private readonly ComboBox tagColumnCombo;
+    private readonly NumericUpDown minPartsInput;
+    private readonly NumericUpDown maxPartsInput;
+    private readonly TextBox separatorsBox;
     private readonly CheckedListBox noteColumnsList;
     private readonly CheckBox watermarkEnabledCheck;
     private readonly CheckedListBox watermarkColumnsList;
@@ -21,6 +25,7 @@ internal sealed class AnnotateDialog : Form
     private readonly Button defaultColorButton;
     private readonly TextBox pdfPathBox;
     private readonly TextBox outputPathBox;
+    private readonly ProgressBar progressBar;
     private readonly Label statusLabel;
     private Color watermarkTextColor = Color.Black;
     private Color defaultHighlightColor = Color.Yellow;
@@ -35,7 +40,7 @@ internal sealed class AnnotateDialog : Form
         MaximizeBox = false;
         MinimizeBox = false;
         ShowInTaskbar = false;
-        ClientSize = new Size(700, 900);
+        ClientSize = new Size(740, 960);
         Font = new Font("Segoe UI", 9F);
         BackColor = Color.FromArgb(245, 247, 250);
         Icon = AddinIcons.CreateIcon(32);
@@ -44,6 +49,9 @@ internal sealed class AnnotateDialog : Form
 
         headerRowInput = new NumericUpDown { Minimum = 1, Maximum = 200, Value = 1, Width = 80 };
         tagColumnCombo = new ComboBox { DropDownStyle = ComboBoxStyle.DropDownList, Width = 260 };
+        minPartsInput = new NumericUpDown { Minimum = 1, Maximum = 10, Value = 3, Width = 58 };
+        maxPartsInput = new NumericUpDown { Minimum = 1, Maximum = 10, Value = 5, Width = 58 };
+        separatorsBox = new TextBox { Text = "-.", Width = 80 };
         noteColumnsList = new CheckedListBox { CheckOnClick = true, Height = 150, Dock = DockStyle.Fill };
         watermarkEnabledCheck = new CheckBox { Text = "Enable watermark", AutoSize = true };
         watermarkColumnsList = new CheckedListBox { CheckOnClick = true, Height = 110, Dock = DockStyle.Fill };
@@ -54,6 +62,7 @@ internal sealed class AnnotateDialog : Form
         defaultColorButton = new Button { Text = "Default color", Width = 110, Height = 28, BackColor = defaultHighlightColor, ForeColor = Color.Black };
         pdfPathBox = new TextBox { ReadOnly = true, Dock = DockStyle.Fill };
         outputPathBox = new TextBox { ReadOnly = true, Dock = DockStyle.Fill };
+        progressBar = new ProgressBar { Minimum = 0, Maximum = 100, Height = 16, Dock = DockStyle.Fill };
         statusLabel = new Label { AutoSize = false, Height = 44, Dock = DockStyle.Fill, ForeColor = Color.FromArgb(91, 105, 123) };
 
         BuildLayout();
@@ -66,10 +75,11 @@ internal sealed class AnnotateDialog : Form
         {
             Dock = DockStyle.Fill,
             ColumnCount = 1,
-            RowCount = 8,
+            RowCount = 9,
             Padding = new Padding(18),
             BackColor = BackColor
         };
+        root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         root.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
@@ -103,31 +113,78 @@ internal sealed class AnnotateDialog : Form
         settings.Controls.Add(tagColumnCombo, 1, 1);
         root.Controls.Add(settings, 0, 1);
 
+        root.Controls.Add(BuildTagFormatPanel(), 0, 2);
+
         var notesPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, BackColor = BackColor };
         notesPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
         notesPanel.RowStyles.Add(new RowStyle(SizeType.Percent, 100));
         notesPanel.Controls.Add(new Label { Text = "Note columns", AutoSize = true, Margin = new Padding(0, 0, 0, 6) }, 0, 0);
         notesPanel.Controls.Add(noteColumnsList, 0, 1);
-        root.Controls.Add(notesPanel, 0, 2);
+        root.Controls.Add(notesPanel, 0, 3);
 
-        root.Controls.Add(BuildWatermarkPanel(), 0, 3);
-        root.Controls.Add(BuildColorRulesPanel(), 0, 4);
+        root.Controls.Add(BuildWatermarkPanel(), 0, 4);
+        root.Controls.Add(BuildColorRulesPanel(), 0, 5);
 
-        root.Controls.Add(BuildPathPicker("PDF file", pdfPathBox, SelectPdf), 0, 5);
-        root.Controls.Add(BuildPathPicker("Output PDF", outputPathBox, SelectOutput), 0, 6);
+        root.Controls.Add(BuildPathPicker("PDF file", pdfPathBox, SelectPdf), 0, 6);
+        root.Controls.Add(BuildPathPicker("Output PDF", outputPathBox, SelectOutput), 0, 7);
 
         var footer = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 3, AutoSize = true, BackColor = BackColor, Margin = new Padding(0, 14, 0, 0) };
         footer.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
         footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
         footer.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
-        footer.Controls.Add(statusLabel, 0, 0);
+        var progressPanel = new TableLayoutPanel { Dock = DockStyle.Fill, ColumnCount = 1, RowCount = 2, AutoSize = true, BackColor = BackColor };
+        progressPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        progressPanel.RowStyles.Add(new RowStyle(SizeType.AutoSize));
+        progressPanel.Controls.Add(statusLabel, 0, 0);
+        progressPanel.Controls.Add(progressBar, 0, 1);
+        footer.Controls.Add(progressPanel, 0, 0);
         var cancelButton = new Button { Text = "Close", Width = 92, Height = 34, DialogResult = DialogResult.Cancel, Margin = new Padding(8, 0, 0, 0) };
         var annotateButton = new Button { Text = "Annotate", Width = 104, Height = 34, Margin = new Padding(8, 0, 0, 0) };
         annotateButton.Click += (_, _) => Annotate();
         footer.Controls.Add(annotateButton, 1, 0);
         footer.Controls.Add(cancelButton, 2, 0);
         CancelButton = cancelButton;
-        root.Controls.Add(footer, 0, 7);
+        root.Controls.Add(footer, 0, 8);
+    }
+
+    private Control BuildTagFormatPanel()
+    {
+        var panel = new TableLayoutPanel
+        {
+            Dock = DockStyle.Top,
+            AutoSize = true,
+            ColumnCount = 7,
+            Margin = new Padding(0, 2, 0, 10),
+            BackColor = BackColor
+        };
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.AutoSize));
+        panel.ColumnStyles.Add(new ColumnStyle(SizeType.Percent, 100));
+
+        panel.Controls.Add(new Label { Text = "Tag format", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 4, 12, 0) }, 0, 0);
+        panel.Controls.Add(new Label { Text = "Min parts", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(0, 4, 6, 0) }, 1, 0);
+        panel.Controls.Add(minPartsInput, 2, 0);
+        panel.Controls.Add(new Label { Text = "Max parts", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(12, 4, 6, 0) }, 3, 0);
+        panel.Controls.Add(maxPartsInput, 4, 0);
+        panel.Controls.Add(new Label { Text = "Separators", AutoSize = true, Anchor = AnchorStyles.Left, Margin = new Padding(12, 4, 6, 0) }, 5, 0);
+        panel.Controls.Add(separatorsBox, 6, 0);
+
+        minPartsInput.ValueChanged += (_, _) =>
+        {
+            if (maxPartsInput.Value < minPartsInput.Value)
+                maxPartsInput.Value = minPartsInput.Value;
+        };
+        maxPartsInput.ValueChanged += (_, _) =>
+        {
+            if (minPartsInput.Value > maxPartsInput.Value)
+                minPartsInput.Value = maxPartsInput.Value;
+        };
+
+        return panel;
     }
 
     private Control BuildColorRulesPanel()
@@ -429,7 +486,7 @@ internal sealed class AnnotateDialog : Form
             outputPathBox.Text = dialog.FileName;
     }
 
-    private void Annotate()
+    private async void Annotate()
     {
         if (tagColumnCombo.SelectedItem is not string tagColumn)
             throw new InvalidOperationException("Choose a tag column.");
@@ -449,28 +506,59 @@ internal sealed class AnnotateDialog : Form
             (float)watermarkFontSizeInput.Value,
             watermarkTextColor,
             watermarkBackgroundCheck.Checked);
+        var tagMatchingOptions = new TagMatchingOptions(
+            (int)minPartsInput.Value,
+            (int)maxPartsInput.Value,
+            separatorsBox.Text);
         IReadOnlyList<TagRecord> records = ExcelSheetReader.BuildTagRecords(
             sheet, tagColumn, noteColumns, watermarkColumns, colorRules, defaultHighlightColor);
         if (records.Count == 0)
             throw new InvalidOperationException("No tag values were found in the selected tag column.");
 
         Cursor = Cursors.WaitCursor;
-        statusLabel.Text = "Annotating PDF...";
+        progressBar.Value = 0;
+        statusLabel.Text = "Preparing annotation...";
+        SetControlsEnabled(false);
+        var progress = new Progress<AnnotationProgress>(UpdateProgress);
         try
         {
-            AnnotationResult result = PdfAnnotationEngine.Annotate(pdfPathBox.Text, outputPathBox.Text, records, watermarkOptions);
-            statusLabel.Text = result.MatchedTags + " of " + result.TotalTags + " tags matched; " + result.Watermarks + " watermarks. Output: " + outputPathBox.Text;
+            string inputPath = pdfPathBox.Text;
+            string outputPath = outputPathBox.Text;
+            AnnotationResult result = await Task.Run(() =>
+                PdfAnnotationEngine.Annotate(inputPath, outputPath, records, watermarkOptions, tagMatchingOptions, progress));
+            UpdateProgress(new AnnotationProgress(99, "Creating Excel report sheet..."));
+            string reportSheetName = ExcelReportWriter.WriteToNewSheet(result.Report);
+            UpdateProgress(new AnnotationProgress(100, "Annotation complete. Report sheet created."));
+            statusLabel.Text = result.MatchedTags + " of " + result.TotalTags + " Excel tags matched; " +
+                               result.ExcelTagsNotFound + " Excel tags not found in PDF. Report sheet: " + reportSheetName;
             MessageBox.Show(
-                result.MatchedTags + " of " + result.TotalTags + " tags were matched." + Environment.NewLine +
-                result.Watermarks + " watermarks were added." + Environment.NewLine + outputPathBox.Text,
+                result.MatchedTags + " of " + result.TotalTags + " Excel tags were matched." + Environment.NewLine +
+                result.ExcelTagsNotFound + " Excel tags were not found in the PDF." + Environment.NewLine +
+                result.Watermarks + " watermarks were added." + Environment.NewLine +
+                "PDF: " + outputPathBox.Text + Environment.NewLine +
+                "Report sheet: " + reportSheetName + Environment.NewLine +
+                "CSV report: " + result.ReportPath,
                 "RK PDF-Annotator",
                 MessageBoxButtons.OK,
                 MessageBoxIcon.Information);
         }
         finally
         {
+            SetControlsEnabled(true);
             Cursor = Cursors.Default;
         }
+    }
+
+    private void UpdateProgress(AnnotationProgress progress)
+    {
+        progressBar.Value = Math.Max(progressBar.Minimum, Math.Min(progressBar.Maximum, progress.Percent));
+        statusLabel.Text = progress.Percent + "% - " + progress.Message;
+    }
+
+    private void SetControlsEnabled(bool enabled)
+    {
+        foreach (Control control in Controls)
+            control.Enabled = enabled;
     }
 
     private static int FindLikelyTagColumn(IReadOnlyList<string> headers)
