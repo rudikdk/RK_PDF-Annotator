@@ -28,6 +28,15 @@ Source and package information:
 - PdfPig: <https://github.com/UglyToad/PdfPig>
 - Microsoft .NET libraries: <https://github.com/dotnet/runtime>
 
+## PdfPig NOTICE
+
+The following attribution is reproduced from PdfPig's upstream `NOTICES.txt`
+for version 0.1.14:
+
+```text
+This product is derived from software developed at The Apache Software Foundation (http://www.apache.org/). Based on source code originally developed in the PDFBox and FontBox projects. Copyright (c) 2002-2007, www.pdfbox.org Includes the Adobe Glyph List Copyright 1997, 1998, 2002, 2007, 2010 Adobe Systems Incorporated. Includes the Zapf Dingbats Glyph List Copyright 2002, 2010 Adobe Systems Incorporated.
+```
+
 ## zlib License
 
 Applies to ExcelDna.AddIn and ExcelDna.Integration.

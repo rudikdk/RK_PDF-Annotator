@@ -78,13 +78,13 @@ Watermark values are joined in the selected order with ` / `. Empty cells are sk
 Run:
 
 ```powershell
-.\excel-addin\scripts\package-release.ps1 -Version 1.1.0
+.\excel-addin\scripts\package-release.ps1 -Version 1.1.1
 ```
 
 The package is written to:
 
 ```text
-excel-addin\dist\RKPdfAnnotator-v1.1.0.zip
+excel-addin\dist\RKPdfAnnotator-v1.1.1.zip
 ```
 
 ## Notes

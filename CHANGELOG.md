@@ -1,5 +1,9 @@
 ﻿# Changelog
 
+## 1.1.1 - 2026-07-16
+
+- Added the upstream PdfPig NOTICE attribution required for redistribution.
+
 ## 1.1.0 - 2026-07-16
 
 - Renamed the add-in to RK PDF-Annotator.
