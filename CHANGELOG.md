@@ -1,12 +1,13 @@
 ﻿# Changelog
 
-## Unreleased
+## 1.1.0 - 2026-07-16
 
 - Renamed the add-in to RK PDF-Annotator.
 - Added per-tag color rules (by tag part or Excel column value) with a configurable default highlight color.
 - Added native PDF watermarks using one or more ordered Excel column values.
 - Added watermark font-size, text-color, and white-background controls.
 - Added watermark placement support for normal and rotated PDF pages.
+- Added complete third-party notices and license texts for packaged dependencies.
 
 ## 1.0.0
 

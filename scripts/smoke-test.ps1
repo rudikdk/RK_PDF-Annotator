@@ -83,6 +83,7 @@ $assembly = [System.Reflection.Assembly]::LoadFrom((Join-Path $bin "RKPdfAnnotat
 $tagType = $assembly.GetType("RKPdfAnnotator.TagRecord", $true)
 $engineType = $assembly.GetType("RKPdfAnnotator.PdfAnnotationEngine", $true)
 $optionsType = $assembly.GetType("RKPdfAnnotator.WatermarkOptions", $true)
+$tagMatchingOptionsType = $assembly.GetType("RKPdfAnnotator.TagMatchingOptions", $true)
 $rowType = $assembly.GetType("RKPdfAnnotator.RowData", $true)
 $sheetType = $assembly.GetType("RKPdfAnnotator.SheetData", $true)
 $readerType = $assembly.GetType("RKPdfAnnotator.ExcelSheetReader", $true)
@@ -102,13 +103,13 @@ $sheet = [System.Activator]::CreateInstance($sheetType, @("Smoke.xlsx", "Tags", 
 $noteColumns = [System.Collections.Generic.List[string]]::new()
 $watermarkColumns = [System.Collections.Generic.List[string]]::new()
 @("Type", "Blank", "Tag", "Location") | ForEach-Object { $watermarkColumns.Add($_) }
-$builtRecords = $readerType.GetMethod("BuildTagRecords").Invoke($null, @($sheet, "Tag", $noteColumns, $watermarkColumns))
+$builtRecords = $readerType.GetMethod("BuildTagRecords").Invoke($null, @($sheet, "Tag", $noteColumns, $watermarkColumns, $null, $null))
 $builtWatermark = $tagType.GetProperty("WatermarkText").GetValue($builtRecords[0])
 if ($builtWatermark -ne "Pump / Inlet") {
     throw "Watermark formatting failed: expected 'Pump / Inlet', got '$builtWatermark'."
 }
 
-$record = [System.Activator]::CreateInstance($tagType, @("PUMP-101-A", "Description: Smoke test component", "Pump / Inlet", 2))
+$record = [System.Activator]::CreateInstance($tagType, @("PUMP-101-A", "Description: Smoke test component", "Pump / Inlet", 2, [System.Drawing.Color]::Yellow))
 $listType = [System.Collections.Generic.List``1].MakeGenericType($tagType)
 $records = [System.Activator]::CreateInstance($listType)
 $records.Add($record) | Out-Null
@@ -116,9 +117,10 @@ $records.Add($record) | Out-Null
 $columnList = [System.Collections.Generic.List[string]]::new()
 $columnList.Add("Description")
 $watermarkOptions = [System.Activator]::CreateInstance($optionsType, @($true, $columnList, [single]9, [System.Drawing.Color]::DarkBlue, $true))
+$tagMatchingOptions = $tagMatchingOptionsType.GetProperty("Default", [System.Reflection.BindingFlags]"Public, Static").GetValue($null)
 
 $method = $engineType.GetMethod("Annotate", [System.Reflection.BindingFlags]"Public, Static")
-$parameters = [object[]]@([string]$inputPdf, [string]$outputPdf, $records, $watermarkOptions)
+$parameters = [object[]]@([string]$inputPdf, [string]$outputPdf, $records, $watermarkOptions, $tagMatchingOptions, $null)
 $result = $method.Invoke($null, $parameters)
 $resultType = $result.GetType()
 $totalTags = $resultType.GetProperty("TotalTags").GetValue($result)
@@ -147,12 +149,12 @@ if ($SamplePdf -and (Test-Path $SamplePdf)) {
     }
 
     $sampleRecords = [System.Activator]::CreateInstance($listType)
-    $sampleRecords.Add([System.Activator]::CreateInstance($tagType, @("301.TA.NON.1", "Description: punctuation normalization test", "Non-return / Area 301", 2))) | Out-Null
-    $sampleRecords.Add([System.Activator]::CreateInstance($tagType, @("201-LM-01", "Description: dash tag sample", "Level monitor", 3))) | Out-Null
-    $sampleRecords.Add([System.Activator]::CreateInstance($tagType, @("111.LT.CSB1.407", "Description: screenshot placement test", "Level transmitter / CSB1", 4))) | Out-Null
-    $sampleRecords.Add([System.Activator]::CreateInstance($tagType, @("311.PV.PRL1.201", "Description: landscape placement regression", "LB3051252157", 5))) | Out-Null
+    $sampleRecords.Add([System.Activator]::CreateInstance($tagType, @("301.TA.NON.1", "Description: punctuation normalization test", "Non-return / Area 301", 2, [System.Drawing.Color]::Yellow))) | Out-Null
+    $sampleRecords.Add([System.Activator]::CreateInstance($tagType, @("201-LM-01", "Description: dash tag sample", "Level monitor", 3, [System.Drawing.Color]::Yellow))) | Out-Null
+    $sampleRecords.Add([System.Activator]::CreateInstance($tagType, @("111.LT.CSB1.407", "Description: screenshot placement test", "Level transmitter / CSB1", 4, [System.Drawing.Color]::Yellow))) | Out-Null
+    $sampleRecords.Add([System.Activator]::CreateInstance($tagType, @("311.PV.PRL1.201", "Description: landscape placement regression", "LB3051252157", 5, [System.Drawing.Color]::Yellow))) | Out-Null
 
-    $sampleParameters = [object[]]@([string]$SamplePdf, [string]$sampleOutputPdf, $sampleRecords, $watermarkOptions)
+    $sampleParameters = [object[]]@([string]$SamplePdf, [string]$sampleOutputPdf, $sampleRecords, $watermarkOptions, $tagMatchingOptions, $null)
     $sampleResult = $method.Invoke($null, $sampleParameters)
     $sampleResultType = $sampleResult.GetType()
 
